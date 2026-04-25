@@ -1,26 +1,20 @@
 {% extends "base.html" %}
+{% block title %}管理员登录{% endblock %}
 {% block body %}
-<style>
-body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-.login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-</style>
-<div class="login-card">
-    <h3 style="text-align:center;margin-bottom:24px">ð 管理后台</h3>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-    <div class="alert alert-{{ cat }}">{{ msg }}</div>
-    {% endfor %}
-    {% endwith %}
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">用户名</label>
-            <input type="text" name="username" required class="form-control">
-        </div>
-        <div class="mb-3">
-            <label class="form-label">密码</label>
-            <input type="password" name="password" required class="form-control">
-        </div>
-        <button type="submit" class="btn btn-primary w-100">登录</button>
-    </form>
-</div>
+<div class="container">
+<div class="row justify-content-center" style="margin-top:100px;">
+<div class="col-md-4">
+<div class="card p-4">
+<h4 class="text-center mb-4"><i class="bi bi-shield-lock"></i> 管理员登录</h4>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}{% for cat,msg in messages %}
+<div class="alert alert-{{cat}} alert-dismissible fade show">{{msg}}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+{% endfor %}{% endif %}{% endwith %}
+<form method="POST">
+<div class="mb-3"><label class="form-label">用户名</label><input name="username" class="form-control" required></div>
+<div class="mb-3"><label class="form-label">密码</label><input name="password" type="password" class="form-control" required></div>
+<button class="btn btn-primary w-100">登录</button>
+</form>
+<div class="text-center mt-3"><a href="/" class="text-muted">← 学生入口</a></div>
+</div></div></div></div>
 {% endblock %}

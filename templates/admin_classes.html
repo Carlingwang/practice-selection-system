@@ -1,22 +1,38 @@
 {% extends "admin_base.html" %}
-{% block admin_content %}
-<h4>ð« 班级管理</h4>
-<div style="background:#fff;border-radius:10px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-    <form method="POST" action="{{ url_for('admin_classes_add', pid=pid) }}" style="display:flex;gap:8px;margin-bottom:16px">
-        <input type="text" name="name" required placeholder="班级名称" class="form-control" style="max-width:300px">
-        <button type="submit" class="btn btn-primary">添加</button>
-    </form>
-    <table class="table table-hover">
-        <thead><tr><th>班级名称</th><th>学生数</th><th>操作</th></tr></thead>
-        <tbody>
-        {% for c in classes %}
-        <tr>
-            <td>{{ c.name }}</td>
-            <td>{{ c.student_count }}</td>
-            <td><a href="{{ url_for('admin_classes_delete', pid=pid, cid=c.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除？')">删除</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+{% block title %}班级管理{% endblock %}
+{% block body %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container-fluid">
+<a class="navbar-brand" href="/admin"><i class="bi bi-briefcase"></i> 实习选岗系统</a>
+<div class="navbar-nav me-auto">
+<a class="nav-link" href="/admin"><i class="bi bi-speedometer2"></i> 看板</a>
+<a class="nav-link active" href="/admin/classes"><i class="bi bi-people"></i> 班级</a>
+<a class="nav-link" href="/admin/students"><i class="bi bi-person-badge"></i> 学生</a>
+<a class="nav-link" href="/admin/positions"><i class="bi bi-building"></i> 岗位</a>
+<a class="nav-link" href="/admin/assign"><i class="bi bi-link-45deg"></i> 指定</a>
+<a class="nav-link" href="/admin/export"><i class="bi bi-download"></i> 导出</a>
+</div><a href="/admin/logout" class="btn btn-outline-light btn-sm">退出</a>
+</div></nav>
+<div class="container mt-4">
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}{% for cat,msg in messages %}
+<div class="alert alert-{{cat}} alert-dismissible fade show">{{msg}}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+{% endfor %}{% endif %}{% endwith %}
+<div class="card p-3 mb-3">
+<h5><i class="bi bi-people"></i> 班级管理</h5>
+<form method="POST" action="/admin/classes/add" class="row g-2 align-items-end">
+<div class="col-auto"><label class="form-label">班级名称</label><input name="name" class="form-control" placeholder="如：护理1班" required></div>
+<div class="col-auto"><button class="btn btn-primary"><i class="bi bi-plus"></i> 添加班级</button></div>
+</form>
+</div>
+<div class="card"><table class="table mb-0">
+<thead><tr><th>#</th><th>班级名称</th><th>学生数</th><th>操作</th></tr></thead>
+<tbody>
+{% for c in classes %}
+<tr><td>{{loop.index}}</td><td>{{c.name}}</td><td>{{c.student_count}}</td>
+<td><a href="/admin/classes/delete/{{c.id}}" class="btn btn-danger btn-sm" onclick="return confirm('删除班级会解除学生关联，确定？')"><i class="bi bi-trash"></i></a></td></tr>
+{% endfor %}
+{% if not classes %}<tr><td colspan="4" class="text-center text-muted">暂无班级，请先添加</td></tr>{% endif %}
+</tbody></table></div>
 </div>
 {% endblock %}

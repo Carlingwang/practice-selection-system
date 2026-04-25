@@ -1,42 +1,30 @@
 {% extends "base.html" %}
 {% block body %}
-<style>
-body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; }
-.admin-nav { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
-.admin-nav .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; flex-wrap: wrap; }
-.admin-nav a { color: rgba(255,255,255,0.85); text-decoration: none; padding: 14px 18px; font-weight: 500; font-size: 0.9em; transition: all 0.2s; }
-.admin-nav a:hover, .admin-nav a.active { color: #fff; background: rgba(255,255,255,0.15); }
-.admin-nav .brand { font-weight: 700; font-size: 1.1em; color: #fff !important; }
-.admin-content { max-width: 1100px; margin: 0 auto; padding: 24px; }
-</style>
-<nav class="admin-nav">
-    <div class="nav-inner">
-        <a href="{{ url_for('admin_projects') }}" class="brand">← 项目列表</a>
-        {% if pid is defined %}
-        <a href="{{ url_for('admin_dashboard', pid=pid) }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">ð 看板</a>
-        <a href="{{ url_for('admin_classes', pid=pid) }}" class="{% if request.endpoint == 'admin_classes' %}active{% endif %}">ð« 班级</a>
-        <a href="{{ url_for('admin_students', pid=pid) }}" class="{% if request.endpoint == 'admin_students' %}active{% endif %}">ð¨‍ð 学生</a>
-        <a href="{{ url_for('admin_positions', pid=pid) }}" class="{% if request.endpoint == 'admin_positions' %}active{% endif %}">ð¢ 岗位</a>
-        <a href="{{ url_for('admin_assign', pid=pid) }}" class="{% if request.endpoint == 'admin_assign' %}active{% endif %}">ð¯ 指定</a>
-        <a href="{{ url_for('admin_submissions', pid=pid) }}" class="{% if request.endpoint == 'admin_submissions' %}active{% endif %}">ð 记录</a>
-        <a href="{{ url_for('admin_export', pid=pid) }}">ð¥ 导出</a>
-        {% endif %}
-        <a href="{{ url_for('admin_logout') }}" style="margin-left:auto">ðª 退出</a>
-    </div>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+<div class="container">
+<a class="navbar-brand" href="/admin">实习选岗管理后台</a>
+<div class="navbar-nav">
+<a class="nav-link" href="/admin">📊 看板</a>
+<a class="nav-link" href="/admin/classes">👥 班级</a>
+<a class="nav-link" href="/admin/students">🎓 学生</a>
+<a class="nav-link" href="/admin/positions">🏥 岗位</a>
+<a class="nav-link" href="/admin/assign">🔗 指定</a>
+<a class="nav-link" href="/admin/export">📥 导出</a>
+<a class="nav-link text-white-50" href="/admin/logout">退出</a>
+</div>
+</div>
 </nav>
+<div class="container">
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-<div class="admin-content" style="padding-bottom:0">
-    {% for category, message in messages %}
-    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="border-radius:8px;margin-bottom:8px">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }} alert-dismissible fade show">
+{{ message }}
+<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
+{% endfor %}
 {% endif %}
 {% endwith %}
-<div class="admin-content">
-    {% block admin_content %}{% endblock %}
+{% block content %}{% endblock %}
 </div>
 {% endblock %}

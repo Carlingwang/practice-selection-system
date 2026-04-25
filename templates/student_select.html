@@ -1,121 +1,173 @@
 {% extends "base.html" %}
+{% block title %}选择实习岗位{% endblock %}
 {% block extra_head %}
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding-bottom: 80px; }
-.top-bar { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
-.top-bar .info { font-size: 0.85em; opacity: 0.9; }
-.top-bar a { color: #fff; text-decoration: none; opacity: 0.8; }
-.main { max-width: 700px; margin: 16px auto; padding: 0 12px; }
-.position-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; gap: 12px; align-items: flex-start; cursor: pointer; transition: all 0.2s; position: relative; }
-.position-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-.position-card.selected { border: 2px solid #667eea; }
-.position-card.assigned-tag::before { content: '指定'; position: absolute; top: -4px; right: 12px; background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; padding: 2px 10px; border-radius: 0 0 8px 8px; font-size: 0.75em; font-weight: 600; }
-.position-card.full { opacity: 0.5; pointer-events: none; }
-.radio-wrap { flex-shrink: 0; padding-top: 4px; }
-.radio-wrap input[type=radio] { width: 20px; height: 20px; accent-color: #667eea; }
-.pos-info { flex: 1; }
-.pos-name { font-weight: 700; font-size: 1.05em; color: #2c3e50; }
-.pos-meta { font-size: 0.82em; color: #95a5a6; margin-top: 4px; }
-.quota-bar { height: 6px; background: #e8e8e8; border-radius: 3px; margin-top: 8px; overflow: hidden; }
-.quota-bar .fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-.quota-text { font-size: 0.78em; margin-top: 4px; font-weight: 600; }
-.submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-.submit-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; padding: 14px 40px; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; }
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.empty-state { text-align: center; padding: 60px; color: rgba(255,255,255,0.7); }
+    * { box-sizing: border-box; }
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 24px 20px;
+        margin: -16px -16px 20px -16px;
+        border-radius: 0 0 20px 20px;
+    }
+    .page-header h1 { font-size: 22px; margin: 0 0 8px 0; font-weight: 600; }
+    .page-header .info { font-size: 14px; opacity: 0.9; }
+    .page-header .badge { background: rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 20px; font-size: 12px; margin-left: 8px; }
+    .position-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        cursor: pointer;
+        position: relative;
+    }
+    .position-card:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .position-card.selected { border-color: #667eea; background: linear-gradient(135deg, #f0f3ff 0%, #e8ecff 100%); }
+    .position-card.disabled { opacity: 0.6; cursor: not-allowed; }
+    .position-name { font-size: 18px; font-weight: 700; color: #1a1a2e; margin-bottom: 12px; }
+    .position-info { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+    .position-info .item { font-size: 13px; color: #666; }
+    .position-req { font-size: 13px; color: #dc3545; background: #fff5f5; padding: 8px 12px; border-radius: 8px; margin-top: 12px; border-left: 3px solid #dc3545; }
+    .quota-badge { position: absolute; top: 16px; right: 16px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .quota-badge.has { background: #d4edda; color: #155724; }
+    .quota-badge.full { background: #f8d7da; color: #721c24; }
+    .quota-badge.low { background: #fff3cd; color: #856404; }
+    .submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; z-index: 100; }
+    .submit-bar .selected-info { font-size: 14px; color: #666; }
+    .submit-bar .selected-name { font-weight: 600; color: #667eea; }
+    .btn-submit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-submit:hover { transform: scale(1.02); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .preview-banner { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; text-align: center; padding: 12px; font-size: 14px; border-radius: 12px; margin-bottom: 16px; }
+    .progress-section { background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .progress-section h3 { font-size: 15px; margin: 0 0 12px 0; color: #333; }
+    .progress-bar-container { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.5s; }
+    .progress-text { font-size: 12px; color: #888; }
+    .no-positions { text-align: center; padding: 60px 20px; color: #999; }
 </style>
 {% endblock %}
+
 {% block body %}
-<div class="top-bar">
-    <div>
-        <div style="font-weight:700;font-size:1.1em">{{ student_name }} · {{ class_name or '未分班' }}</div>
-        <div class="info">{{ project_name }}</div>
+<div class="page-header">
+    <h1>{{ student_name }} <span class="badge">{{ class_name }}</span></h1>
+    <div class="info" id="statusText">正在加载...</div>
+</div>
+
+{% if system_mode == 'preview' %}
+<div class="preview-banner">当前为预览模式，可以浏览岗位信息但暂不能选择</div>
+{% endif %}
+
+<div class="progress-section">
+    <h3>选岗进度</h3>
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
     </div>
-    <a href="{{ url_for('student_logout') }}">退出登录</a>
+    <div class="progress-text" id="progressText">加载中...</div>
 </div>
 
-<div class="main" id="positionsList">
-    <div class="empty-state" id="loadingState">加载中...</div>
-</div>
+<div id="positionList"></div>
 
-<div class="submit-bar" id="submitBar" style="display:none">
-    <span id="selectedInfo" style="color:#666;font-size:0.9em">已选择：<b id="selectedName">-</b></span>
-    <button class="submit-btn" id="submitBtn" disabled onclick="submitChoice()">确认提交</button>
+{% if system_mode == 'open' %}
+<div class="submit-bar" id="submitBar" style="display: none;">
+    <div class="selected-info">已选: <span class="selected-name" id="selectedName"></span></div>
+    <button type="button" class="btn-submit" id="btnSubmit" disabled>确认提交</button>
 </div>
+{% endif %}
 
-<form id="submitForm" method="POST" style="display:none">
+<div style="height: 80px;"></div>
+
+{% if system_mode == 'open' %}
+<form id="submitForm" method="POST" style="display: none;">
     <input type="hidden" name="position_id" id="formPositionId">
 </form>
+{% endif %}
 
 <script>
 const studentId = {{ student_id }};
-const projectId = {{ project_id }};
+const classId = {{ class_id }};
 const isOpen = '{{ system_mode }}' === 'open';
-let positions = [];
 let selectedId = null;
+let positions = [];
 
-function fetchPositions() {
-    fetch('/api/positions/' + projectId + '/' + studentId)
+function loadPositions() {
+    fetch('/api/positions/' + studentId)
         .then(r => r.json())
         .then(data => {
             positions = data;
             renderPositions();
+            updateProgress();
+        })
+        .catch(() => {
+            document.getElementById('positionList').innerHTML = '<div class="no-positions">加载失败，请刷新页面</div>';
         });
 }
 
 function renderPositions() {
-    const list = document.getElementById('positionsList');
-    if (!positions.length) {
-        list.innerHTML = '<div class="empty-state">暂无可选岗位</div>';
-        return;
-    }
+    const list = document.getElementById('positionList');
+    if (!positions.length) { list.innerHTML = '<div class="no-positions">暂无可选岗位</div>'; return; }
+    
     let html = '';
     positions.forEach(p => {
-        const isFull = p.remaining <= 0 && !p.assigned && !p.selected;
-        const isSelected = p.selected || selectedId === p.id;
-        const pct = p.quota > 0 ? ((p.quota - p.remaining) / p.quota * 100) : 0;
-        const fillColor = pct >= 100 ? '#e74c3c' : pct >= 70 ? '#f39c12' : '#00b894';
-        html += '<div class="position-card' + (isSelected ? ' selected' : '') + (p.assigned ? ' assigned-tag' : '') + (isFull ? ' full' : '') + '" onclick="selectPos(' + p.id + ', this)">';
-        html += '<div class="radio-wrap"><input type="radio" name="pos" ' + (isSelected ? 'checked' : '') + ' ' + (isFull || !isOpen ? 'disabled' : '') + '></div>';
-        html += '<div class="pos-info">';
-        html += '<div class="pos-name">' + p.base_name + '</div>';
-        if (p.instructor) html += '<div class="pos-meta">ð¨‍ð« ' + p.instructor + '</div>';
-        if (p.requirements) html += '<div class="pos-meta">ð ' + p.requirements + '</div>';
-        html += '<div class="quota-bar"><div class="fill" style="width:' + Math.min(pct, 100) + '%;background:' + fillColor + '"></div></div>';
-        html += '<div class="quota-text" style="color:' + (p.remaining > 0 ? '#00b894' : '#e74c3c') + '">剩余 ' + p.remaining + ' / ' + p.quota + ' 名</div>';
-        html += '</div></div>';
+        const isFull = p.remaining <= 0;
+        const isSelected = selectedId === p.id;
+        const cardClass = isSelected ? 'selected' : (isFull && isOpen ? 'disabled' : '');
+        
+        let quotaClass = 'has';
+        let quotaText = '剩余 ' + p.remaining + ' 名';
+        if (isFull) { quotaClass = 'full'; quotaText = '已满'; }
+        else if (p.remaining <= 2) { quotaClass = 'low'; quotaText = '仅剩 ' + p.remaining + ' 名'; }
+        
+        const clickHandler = (isOpen && !isFull) ? 'onclick="selectPos(' + p.id + ',\'' + p.base_name.replace(/'/g, "\\'") + '\')"' : '';
+        
+        html += '<div class="position-card ' + cardClass + '" ' + clickHandler + ' data-id="' + p.id + '">' +
+            '<div class="quota-badge ' + quotaClass + '">' + quotaText + '</div>' +
+            '<div class="position-name">' + p.base_name + '</div>' +
+            '<div class="position-info">' +
+            '<span class="item">指导教师：' + (p.instructor || '待定') + '</span>' +
+            '<span class="item">配额 ' + p.quota + ' 人</span>' +
+            '</div>' +
+            (p.requirements ? '<div class="position-req">' + p.requirements + '</div>' : '') +
+            '</div>';
     });
     list.innerHTML = html;
-    updateSubmitBar();
 }
 
-function selectPos(id, el) {
+function selectPos(id, name) {
     if (!isOpen) return;
+    const pos = positions.find(p => p.id === id);
+    if (pos && pos.remaining <= 0) return;
     selectedId = id;
-    document.querySelectorAll('.position-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    el.querySelector('input[type=radio]').checked = true;
-    updateSubmitBar();
+    document.getElementById('submitBar').style.display = 'flex';
+    document.getElementById('selectedName').textContent = name;
+    document.getElementById('btnSubmit').disabled = false;
+    renderPositions();
 }
 
-function updateSubmitBar() {
-    const bar = document.getElementById('submitBar');
-    bar.style.display = 'flex';
-    const p = positions.find(x => x.id === selectedId);
-    document.getElementById('selectedName').textContent = p ? p.base_name : '未选择';
-    document.getElementById('submitBtn').disabled = !selectedId || !isOpen;
-}
-
-function submitChoice() {
+function submitSelection() {
     if (!selectedId) return;
-    if (!confirm('确认选择该岗位？提交后不可修改。')) return;
+    document.getElementById('btnSubmit').disabled = true;
     document.getElementById('formPositionId').value = selectedId;
     document.getElementById('submitForm').submit();
 }
 
-// 实时轮询
-fetchPositions();
-setInterval(fetchPositions, 5000);
+function updateProgress() {
+    fetch('/api/progress/' + classId)
+        .then(r => r.json())
+        .then(data => {
+            const pct = data.total > 0 ? (data.submitted / data.total * 100) : 0;
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progressText').textContent = '已选 ' + data.submitted + '/' + data.total + ' 人，还有 ' + data.remaining + ' 人未选';
+            document.getElementById('statusText').textContent = '共 ' + data.total + ' 人 | 已提交 ' + data.submitted + ' 人';
+        });
+}
+
+const btn = document.getElementById('btnSubmit');
+if (btn) btn.addEventListener('click', submitSelection);
+loadPositions();
+setInterval(loadPositions, 5000);
 </script>
 {% endblock %}

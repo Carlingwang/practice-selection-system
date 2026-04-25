@@ -1,42 +1,110 @@
 {% extends "admin_base.html" %}
-{% block admin_content %}
-<h4>ð¯ 指定关系管理</h4>
-<div style="background:#fff;border-radius:10px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-    <!-- 导入 -->
-    <form method="POST" action="{{ url_for('admin_assign_import', pid=pid) }}" enctype="multipart/form-data" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-        <input type="file" name="file" accept=".xlsx,.xls" required class="form-control" style="max-width:250px">
-        <button type="submit" class="btn btn-success">导入</button>
-        <a href="{{ url_for('assign_template', pid=pid) }}" class="btn btn-outline-secondary">下载模板</a>
-    </form>
-    <!-- 手动添加 -->
-    <form method="POST" action="{{ url_for('admin_assign_add', pid=pid) }}" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-        <select name="student_id" required class="form-select" style="max-width:250px">
-            <option value="">选择学生</option>
-            {% for s in students %}
-            <option value="{{ s.id }}">{{ s.name }} ({{ s.student_id }}) - {{ s.class_name or '未分班' }}</option>
-            {% endfor %}
-        </select>
-        <select name="position_id" required class="form-select" style="max-width:250px">
-            <option value="">选择岗位</option>
-            {% for p in positions %}
-            <option value="{{ p.id }}">{{ p.base_name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">指定</button>
-    </form>
-    <!-- 现有指定 -->
-    <table class="table table-sm table-hover">
-        <thead><tr><th>学号</th><th>姓名</th><th>指定岗位</th><th>操作</th></tr></thead>
-        <tbody>
-        {% for a in assigns %}
-        <tr>
-            <td>{{ a.sid }}</td>
-            <td>{{ a.sname }}</td>
-            <td><b>{{ a.base_name }}</b></td>
-            <td><a href="{{ url_for('admin_assign_delete', pid=pid, sid=a.student_id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定取消指定？')">取消</a></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+{% block title %}指定选岗{% endblock %}
+{% block body %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<div class="container-fluid">
+<a class="navbar-brand" href="/admin"><i class="bi bi-briefcase"></i> 实习选岗系统</a>
+<div class="navbar-nav me-auto">
+<a class="nav-link" href="/admin"><i class="bi bi-speedometer2"></i> 看板</a>
+<a class="nav-link" href="/admin/classes"><i class="bi bi-people"></i> 班级</a>
+<a class="nav-link" href="/admin/students"><i class="bi bi-person-badge"></i> 学生</a>
+<a class="nav-link" href="/admin/positions"><i class="bi bi-building"></i> 岗位</a>
+<a class="nav-link active" href="/admin/assign"><i class="bi bi-link-45deg"></i> 指定</a>
+<a class="nav-link" href="/admin/export"><i class="bi bi-download"></i> 导出</a>
+</div><a href="/admin/logout" class="btn btn-outline-light btn-sm">退出</a>
+</div></nav>
+<div class="container mt-4">
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}{% for cat,msg in messages %}
+<div class="alert alert-{{cat}} alert-dismissible fade show">{{msg}}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+{% endfor %}{% endif %}{% endwith %}
+
+<div class="row g-3 mb-3">
+<div class="col-md-7">
+<div class="card p-3">
+<h5><i class="bi bi-link-45deg"></i> 指定学生选岗</h5>
+<p class="text-muted">选择学生后，系统将自动筛选出该学生班级可见的岗位。指定后，该学生登录时该岗位将排在第一位。</p>
+<form method="POST" action="/admin/assign/add" class="row g-2 align-items-end" id="assignForm">
+<div class="col-md-4">
+<label class="form-label">选择学生</label>
+<select name="student_id" id="studentSelect" class="form-select" required onchange="loadStudentPositions()">
+<option value="">--请选择--</option>
+{% for s in students %}<option value="{{s.id}}">{{s.student_id}} - {{s.name}} ({{s.class_name or '未分班'}})</option>{% endfor %}
+</select>
 </div>
+<div class="col-md-4">
+<label class="form-label">指定岗位</label>
+<select name="position_id" id="positionSelect" class="form-select" required disabled>
+<option value="">--请先选择学生--</option>
+</select>
+</div>
+<div class="col-md-2"><button class="btn btn-primary w-100" id="submitBtn" disabled><i class="bi bi-check"></i> 指定</button></div>
+</form>
+</div>
+</div>
+<div class="col-md-5">
+<div class="card p-3">
+<h5><i class="bi bi-upload"></i> 批量导入指定</h5>
+<p class="text-muted">Excel格式：学号 + 岗位名称</p>
+<form method="POST" action="/admin/assign/import" enctype="multipart/form-data" class="mb-2">
+<div class="input-group">
+<input type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.xls" required>
+<button class="btn btn-primary btn-sm">导入</button>
+</div>
+</form>
+<a href="/admin/assign/template" class="btn btn-outline-secondary btn-sm">下载模板</a>
+</div>
+</div>
+</div>
+
+<div class="card"><table class="table mb-0">
+<thead><tr><th>#</th><th>学号</th><th>姓名</th><th>指定岗位</th><th>操作</th></tr></thead>
+<tbody>
+{% for a in assigns %}
+<tr><td>{{loop.index}}</td><td>{{a.sid}}</td><td>{{a.sname}}</td><td>{{a.base_name}}</td>
+<td><a href="/admin/assign/delete/{{a.student_id}}" class="btn btn-danger btn-sm"><i class="bi bi-x-circle"></i> 取消</a></td></tr>
+{% endfor %}
+{% if not assigns %}<tr><td colspan="5" class="text-center text-muted">暂无指定记录</td></tr>{% endif %}
+</tbody></table></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function loadStudentPositions() {
+    const studentId = document.getElementById('studentSelect').value;
+    const positionSelect = document.getElementById('positionSelect');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (!studentId) {
+        positionSelect.innerHTML = '<option value="">--请先选择学生--</option>';
+        positionSelect.disabled = true;
+        submitBtn.disabled = true;
+        return;
+    }
+    
+    positionSelect.innerHTML = '<option value="">加载中...</option>';
+    positionSelect.disabled = true;
+    
+    fetch('/api/student_positions/' + studentId)
+    .then(r => r.json())
+    .then(data => {
+        if (data.length === 0) {
+            positionSelect.innerHTML = '<option value="">该学生无可用岗位</option>';
+            positionSelect.disabled = true;
+            submitBtn.disabled = true;
+        } else {
+            positionSelect.innerHTML = '<option value="">--请选择岗位--</option>' + 
+                data.map(p => '<option value="' + p.id + '">' + p.name + '</option>').join('');
+            positionSelect.disabled = false;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(err => {
+        console.error('加载岗位失败:', err);
+        positionSelect.innerHTML = '<option value="">加载失败，请重试</option>';
+        positionSelect.disabled = true;
+        submitBtn.disabled = true;
+    });
+}
+</script>
 {% endblock %}

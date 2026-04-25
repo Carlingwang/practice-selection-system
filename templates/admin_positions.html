@@ -1,52 +1,89 @@
 {% extends "admin_base.html" %}
-{% block admin_content %}
-<h4>ð¢ 岗位管理</h4>
-<div style="background:#fff;border-radius:10px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-    <!-- 导入 -->
-    <form method="POST" action="{{ url_for('admin_positions_import', pid=pid) }}" enctype="multipart/form-data" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-        <input type="file" name="file" accept=".xlsx,.xls" required class="form-control" style="max-width:250px">
-        <button type="submit" class="btn btn-success">导入</button>
-        <a href="{{ url_for('position_template', pid=pid) }}" class="btn btn-outline-secondary">下载模板</a>
-    </form>
-    <!-- 添加岗位 -->
-    <form method="POST" action="{{ url_for('admin_positions_add', pid=pid) }}" style="border:1px solid #eee;border-radius:8px;padding:16px;margin-bottom:16px">
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+{% block title %}岗位管理{% endblock %}
+{% block content %}
+<h4 class="mb-3">🏥 岗位管理</h4>
 
-            <div><label style="font-weight:600;font-size:0.85em">实习基地 *</label><input type="text" name="base_name" required class="form-control"></div>
-            <div><label style="font-weight:600;font-size:0.85em">配额人数</label><input type="number" name="quota" value="1" min="1" class="form-control"></div>
-            <div><label style="font-weight:600;font-size:0.85em">指导教师</label><input type="text" name="instructor" class="form-control"></div>
-            <div><label style="font-weight:600;font-size:0.85em">备注要求</label><input type="text" name="requirements" class="form-control"></div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">添加岗位</div>
+            <div class="card-body">
+                <form method="POST" action="/admin/positions/add">
+                    <div class="mb-2"><input name="base_name" class="form-control form-control-sm" placeholder="实习基地名称" required></div>
+                    <div class="row g-2 mb-2">
+                        <div class="col"><input name="quota" type="number" min="1" class="form-control form-control-sm" placeholder="配额" required></div>
+                        <div class="col"><input name="instructor" class="form-control form-control-sm" placeholder="指导教师"></div>
+                    </div>
+                    <div class="mb-2"><input name="requirements" class="form-control form-control-sm" placeholder="备注要求"></div>
+                    <div class="mb-2">
+                        <label class="form-label small">可见班级（不选则所有班级可见）</label>
+                        <select name="class_ids" class="form-select form-select-sm" multiple size="3">
+                            {% for c in classes %}
+                            <option value="{{c.id}}">{{c.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button class="btn btn-primary btn-sm w-100">添加</button>
+                </form>
+            </div>
         </div>
-        <div style="margin-top:12px">
-            <label style="font-weight:600;font-size:0.85em">可见班级</label><br>
-            {% for c in classes %}
-            <label style="margin-right:12px"><input type="checkbox" name="class_ids" value="{{ c.id }}"> {{ c.name }}</label>
-            {% endfor %}
-            {% if not classes %}<span style="color:#95a5a6">暂无班级</span>{% endif %}
-        </div>
-        <button type="submit" class="btn btn-primary mt-2">添加岗位</button>
-    </form>
-    <!-- 批量操作 -->
-    <div style="margin-bottom:12px">
-        <button onclick="batchDelete()" class="btn btn-danger btn-sm">批量删除</button>
-        <button onclick="toggleSelectAll()" class="btn btn-outline-secondary btn-sm">全选/取消</button>
     </div>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover">
-            <thead><tr><th><input type="checkbox" id="selectAll"></th><th>岗位</th><th>配额</th><th>已选</th><th>指导教师</th><th>备注要求</th><th>可见班级</th><th>操作</th></tr></thead>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">批量导入岗位</div>
+            <div class="card-body">
+                <form method="POST" action="/admin/positions/import" enctype="multipart/form-data">
+                    <div class="input-group">
+                        <input type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.xls,.csv" required>
+                        <button class="btn btn-primary btn-sm">导入</button>
+                    </div>
+                </form>
+                <a href="/admin/positions/template" class="btn btn-outline-secondary btn-sm mt-2">下载模板</a>
+                <p class="text-muted small mt-2 mb-0">Excel列：实习基地、配额人数、指导教师、备注要求、可见班级（逗号分隔班级名）</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>岗位列表</span>
+        <button id="batchDeleteBtn" class="btn btn-danger btn-sm" onclick="batchDelete()" style="display:none">
+            <i class="bi bi-trash"></i> 删除选中
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead><tr>
+                <th width="40"><input type="checkbox" id="selectAll" onchange="toggleAll()"></th>
+                <th>实习基地</th>
+                <th>指导教师</th>
+                <th>备注要求</th>
+                <th>配额/已选</th>
+                <th>可见班级</th>
+                <th>操作</th>
+            </tr></thead>
             <tbody>
             {% for p in positions %}
-            <tr>
-                <td><input type="checkbox" class="pos-cb" value="{{ p.id }}"></td>
-                <td><b>{{ p.base_name }}</b></td>
-                <td>{{ p.quota }}</td>
-                <td>{{ p.current_count }}</td>
-                <td>{{ p.instructor or '-' }}</td>
-                <td>{{ p.requirements or '-' }}</td>
-                <td>{{ p.class_names or '全部' }}</td>
+            <tr class="position-row">
+                <td><input type="checkbox" class="position-check" value="{{p.id}}" onchange="updateBatchBtn()"></td>
+                <td>{{p.base_name}}</td>
+                <td>{{p.instructor or '-'}}</td>
+                <td>{{p.requirements or '-'}}</td>
                 <td>
-                    <button onclick="editPos({{ p.id }},'{{ p.base_name }}',{{ p.quota }},'{{ p.instructor or '' }}','{{ p.requirements or '' }}','{{ p.visible_class_ids or '' }}')" class="btn btn-sm btn-outline-primary">编辑</button>
-                    <a href="{{ url_for('admin_positions_delete', pid=pid, pos_id=p.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除？')">删除</a>
+                    <span class="badge {% if p.current_count >= p.quota %}bg-danger{% elif p.current_count >= p.quota*0.8 %}bg-warning{% else %}bg-success{% endif %}">
+                        {{p.current_count}}/{{p.quota}}
+                    </span>
+                </td>
+                <td>{{p.class_names or '全部'}}</td>
+                <td>
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal"
+                        data-id="{{p.id}}" data-name="{{p.base_name}}" data-quota="{{p.quota}}" 
+                        data-instructor="{{p.instructor}}" data-requirements="{{p.requirements}}"
+                        data-classes="{{p.visible_class_ids}}">
+                        编辑
+                    </button>
+                    <a href="/admin/positions/delete/{{p.id}}" class="btn btn-outline-danger btn-sm" onclick="return confirm('确定删除？')">删除</a>
                 </td>
             </tr>
             {% endfor %}
@@ -56,65 +93,61 @@
 </div>
 
 <!-- 编辑弹窗 -->
-<div id="editPosModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999">
-    <div style="background:#fff;border-radius:12px;padding:30px;max-width:600px;margin:80px auto">
-        <h5>编辑岗位</h5>
-        <form id="editPosForm" method="POST">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                <div><label style="font-weight:600;font-size:0.85em">实习基地</label><input type="text" id="editBaseName" name="base_name" required class="form-control"></div>
-                <div><label style="font-weight:600;font-size:0.85em">配额</label><input type="number" id="editQuota" name="quota" min="1" class="form-control"></div>
-                <div><label style="font-weight:600;font-size:0.85em">指导教师</label><input type="text" id="editInstructor" name="instructor" class="form-control"></div>
-                <div><label style="font-weight:600;font-size:0.85em">备注要求</label><input type="text" id="editRequirements" name="requirements" class="form-control"></div>
-            </div>
-            <div style="margin-top:12px">
-                <label style="font-weight:600;font-size:0.85em">可见班级</label><br>
-                <div id="editClassCheckboxes">
-                    {% for c in classes %}
-                    <label style="margin-right:12px"><input type="checkbox" name="class_ids" value="{{ c.id }}" class="edit-class-cb"> {{ c.name }}</label>
-                    {% endfor %}
-                </div>
-            </div>
-            <div style="margin-top:16px;text-align:right">
-                <button type="button" onclick="document.getElementById('editPosModal').style.display='none'" class="btn btn-secondary btn-sm">取消</button>
-                <button type="submit" class="btn btn-primary btn-sm">保存</button>
-            </div>
-        </form>
+<div class="modal fade" id="editModal"><div class="modal-dialog"><div class="modal-content">
+<form method="POST" id="editForm" action="/admin/positions/edit/0">
+    <div class="modal-header"><h5 class="modal-title">编辑岗位</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <div class="mb-2"><label class="form-label">实习基地</label><input name="base_name" class="form-control" required></div>
+        <div class="mb-2"><label class="form-label">配额</label><input name="quota" type="number" min="1" class="form-control" required></div>
+        <div class="mb-2"><label class="form-label">指导教师</label><input name="instructor" class="form-control"></div>
+        <div class="mb-2"><label class="form-label">备注要求</label><input name="requirements" class="form-control"></div>
+        <div class="mb-2">
+            <label class="form-label">可见班级（不选则所有班级可见）</label>
+            <select name="class_ids" class="form-select" multiple size="3" id="editClassSelect">
+                {% for c in classes %}
+                <option value="{{c.id}}">{{c.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
-</div>
+    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button class="btn btn-primary">保存</button></div>
+</form>
+</div></div></div>
+
+<form id="batchDeleteForm" method="POST" action="/admin/positions/batch_delete" style="display:none">
+    <input type="hidden" name="ids" id="batchDeleteIds">
+</form>
 
 <script>
-document.getElementById('selectAll').onchange = function() {
-    document.querySelectorAll('.pos-cb').forEach(cb => cb.checked = this.checked);
-};
-function toggleSelectAll() {
-    const all = document.getElementById('selectAll');
-    all.checked = !all.checked;
-    all.onchange();
+document.getElementById('editModal').addEventListener('show.bs.modal', function(e) {
+    const btn = e.relatedTarget;
+    document.getElementById('editForm').action = '/admin/positions/edit/' + btn.dataset.id;
+    document.querySelector('#editForm [name=base_name]').value = btn.dataset.name;
+    document.querySelector('#editForm [name=quota]').value = btn.dataset.quota;
+    document.querySelector('#editForm [name=instructor]').value = btn.dataset.instructor || '';
+    document.querySelector('#editForm [name=requirements]').value = btn.dataset.requirements || '';
+    // 设置班级选中状态
+    const classIds = (btn.dataset.classes || '').split(',').filter(Boolean);
+    document.querySelectorAll('#editClassSelect option').forEach(opt => {
+        opt.selected = classIds.includes(opt.value);
+    });
+});
+
+function toggleAll() {
+    const checked = document.getElementById('selectAll').checked;
+    document.querySelectorAll('.position-check').forEach(cb => cb.checked = checked);
+    updateBatchBtn();
+}
+function updateBatchBtn() {
+    const checked = document.querySelectorAll('.position-check:checked');
+    document.getElementById('batchDeleteBtn').style.display = checked.length > 0 ? '' : 'none';
 }
 function batchDelete() {
-    const ids = [...document.querySelectorAll('.pos-cb:checked')].map(cb => cb.value);
-    if (!ids.length) { alert('请选择岗位'); return; }
-    if (!confirm('确定删除选中的 ' + ids.length + ' 个岗位？')) return;
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '{{ url_for("admin_positions_batch_delete", pid=pid) }}';
-    const input = document.createElement('input');
-    input.type = 'hidden'; input.name = 'ids'; input.value = ids.join(',');
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-}
-function editPos(id, name, quota, instructor, requirements, classIds) {
-    document.getElementById('editBaseName').value = name;
-    document.getElementById('editQuota').value = quota;
-    document.getElementById('editInstructor').value = instructor;
-    document.getElementById('editRequirements').value = requirements;
-    document.getElementById('editPosForm').action = '{{ url_for("admin_positions_edit", pid=pid, pos_id=0) }}'.replace('0', id);
-    const selectedIds = classIds ? classIds.split(',').map(Number) : [];
-    document.querySelectorAll('.edit-class-cb').forEach(cb => {
-        cb.checked = selectedIds.includes(parseInt(cb.value));
-    });
-    document.getElementById('editPosModal').style.display = 'block';
+    const ids = Array.from(document.querySelectorAll('.position-check:checked')).map(cb => cb.value);
+    if (ids.length > 0 && confirm('确定删除选中的 ' + ids.length + ' 个岗位？')) {
+        document.getElementById('batchDeleteIds').value = ids.join(',');
+        document.getElementById('batchDeleteForm').submit();
+    }
 }
 </script>
 {% endblock %}

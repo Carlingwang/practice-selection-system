@@ -1,46 +1,63 @@
 {% extends "base.html" %}
+{% block title %}实习选岗系统{% endblock %}
 {% block extra_head %}
 <style>
-body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-.login-title { text-align: center; font-size: 1.5em; font-weight: 700; color: #2c3e50; margin-bottom: 24px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { font-weight: 600; color: #555; display: block; margin-bottom: 6px; font-size: 0.9em; }
-.form-group select, .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1em; box-sizing: border-box; }
-.btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; margin-top: 8px; }
-.btn-submit:hover { opacity: 0.9; }
-.alert { border-radius: 10px; margin-bottom: 16px; padding: 12px 16px; font-size: 0.9em; }
+    * { box-sizing: border-box; }
+    .login-container { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+    .login-card { background: white; border-radius: 24px; padding: 40px 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-title { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; color: #1a1a2e; }
+    .login-subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 32px; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 14px 16px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; transition: all 0.2s; outline: none; }
+    .form-control:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.15); }
+    .btn-login { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+    .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+    .status-badge { text-align: center; padding: 10px 16px; border-radius: 12px; font-size: 13px; margin-bottom: 24px; }
+    .status-open { background: #d4edda; color: #155724; }
+    .status-preview { background: #cce5ff; color: #004085; }
+    .status-close { background: #f8d7da; color: #721c24; }
+    .alert { padding: 12px 16px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; }
+    .alert-danger { background: #f8d7da; color: #721c24; }
+    .alert-warning { background: #fff3cd; color: #856404; }
+    .alert-success { background: #d4edda; color: #155724; }
+    .alert-info { background: #cce5ff; color: #004085; }
 </style>
 {% endblock %}
+
 {% block body %}
-<div class="login-card">
-    <div class="login-title">ð 实习选岗系统</div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    {% for category, message in messages %}
-    <div class="alert alert-{{ category }}">{{ message }}</div>
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
-    <form method="POST">
-        <div class="form-group">
-            <label>选择项目</label>
-            <select name="project_id" required>
-                <option value="">请选择项目</option>
-                {% for p in projects %}
-                <option value="{{ p.id }}">{{ p.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <label>姓名</label>
-            <input type="text" name="name" required placeholder="请输入姓名">
-        </div>
-        <div class="form-group">
-            <label>学号</label>
-            <input type="text" name="student_id" required placeholder="请输入学号">
-        </div>
-        <button type="submit" class="btn-submit">进入</button>
-    </form>
+<div class="login-container">
+    <div class="login-card">
+        <h1 class="login-title">实习选岗系统</h1>
+        <p class="login-subtitle">请输入姓名和学号登录</p>
+        
+        {% if system_mode == 'close' %}
+        <div class="status-badge status-close">系统暂未开放</div>
+        {% elif system_mode == 'preview' %}
+        <div class="status-badge status-preview">当前为预览模式</div>
+        {% else %}
+        <div class="status-badge status-open">系统已开放</div>
+        {% endif %}
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" name="name" class="form-control" placeholder="请输入姓名" required autofocus>
+            </div>
+            <div class="form-group">
+                <label>学号</label>
+                <input type="text" name="student_id" class="form-control" placeholder="请输入学号" required>
+            </div>
+            <button type="submit" class="btn-login">进入系统</button>
+        </form>
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,16 @@
+# Database files
+practice.db
+*.db
+database.db
+data.db
+
+# Log files
+*.log
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

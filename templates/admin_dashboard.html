@@ -1,82 +1,26 @@
 {% extends "admin_base.html" %}
-{% block admin_content %}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <h3 style="margin:0">ð {{ project.name }} - 管理看板</h3>
-    <span class="badge bg-{% if project.status=='open' %}success{% elif project.status=='preview' %}warning{% else %}secondary{% endif %}" style="font-size:0.9em">
-        {% if project.status == 'open' %}已开放{% elif project.status == 'preview' %}预览中{% else %}已关闭{% endif %}
-    </span>
+{% block title %}管理看板{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><h3>{{ stats.classes }}</h3><p class="mb-0">班级数</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><h3>{{ stats.total_students }}</h3><p class="mb-0">学生总数</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><h3>{{ stats.submitted }}</h3><p class="mb-0">已提交</p></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><h3>{{ stats.total_students - stats.submitted }}</h3><p class="mb-0">未提交</p></div></div></div>
 </div>
 
-<!-- 统计卡片 -->
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
-    <div style="background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-        <div style="font-size:1.8em;font-weight:700;color:#667eea">{{ stats.total_students }}</div>
-        <div style="color:#95a5a6;font-size:0.85em">学生总数</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-        <div style="font-size:1.8em;font-weight:700;color:#00b894">{{ stats.submitted }}</div>
-        <div style="color:#95a5a6;font-size:0.85em">已选人数</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-        <div style="font-size:1.8em;font-weight:700;color:#e17055">{{ stats.total_positions }}</div>
-        <div style="color:#95a5a6;font-size:0.85em">岗位总数</div>
-    </div>
-    <div style="background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-        <div style="font-size:1.8em;font-weight:700;color:#fdcb6e">{{ stats.classes }}</div>
-        <div style="color:#95a5a6;font-size:0.85em">班级数量</div>
-    </div>
-</div>
-
-<!-- 系统控制 -->
-<div style="background:#fff;border-radius:10px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-    <h5 style="margin-bottom:16px">⚙️ 系统控制</h5>
-    <form method="POST" action="{{ url_for('admin_system', pid=pid) }}" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-        <button name="action" value="open" class="btn btn-success btn-sm">开放选择</button>
-        <button name="action" value="preview" class="btn btn-warning btn-sm">预览模式</button>
-        <button name="action" value="close" class="btn btn-danger btn-sm">关闭系统</button>
-        <button name="action" value="reset" class="btn btn-outline-danger btn-sm" onclick="return confirm('确定重置所有选择数据？')">重置数据</button>
-    </form>
-    <hr>
-    <h6>⏰ 定时开放</h6>
-    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
-        <div>
-            <label style="font-size:0.85em;color:#666">开放时间</label>
-            <input type="datetime-local" id="openTime" value="{{ project.open_time or '' }}" class="form-control form-control-sm">
-        </div>
-        <div>
-            <label style="font-size:0.85em;color:#666">截止时间</label>
-            <input type="datetime-local" id="closeTime" value="{{ project.close_time or '' }}" class="form-control form-control-sm">
-        </div>
-        <button onclick="setSchedule()" class="btn btn-primary btn-sm">确认设定时间</button>
-        <span id="scheduleMsg" style="font-size:0.85em;color:#00b894;display:none">✓ 时间已确认</span>
-    </div>
-    <div id="countdown" style="margin-top:8px;font-size:0.9em;color:#e17055;display:none"></div>
-    <hr>
-    <h6>ð 岗位排序</h6>
-    <form method="POST" action="{{ url_for('admin_system', pid=pid) }}" style="display:flex;gap:8px;align-items:center">
-        <select name="random_order" class="form-select form-select-sm" style="width:auto">
-            <option value="0" {% if not project.random_order %}selected{% endif %}>顺序展示</option>
-            <option value="1" {% if project.random_order %}selected{% endif %}>随机展示</option>
-        </select>
-        <button name="action" value="set_random" class="btn btn-outline-primary btn-sm">应用</button>
-    </form>
-</div>
-
-<!-- 岗位概览 -->
-<div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
-    <h5 style="margin-bottom:16px">ð¢ 岗位概览</h5>
-    <div class="table-responsive">
-        <table class="table table-sm table-hover">
-            <thead><tr><th>岗位</th><th>指导教师</th><th>配额</th><th>已选</th><th>剩余</th><th>可见班级</th></tr></thead>
+<div class="card mb-4">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-graph-up"></i> 岗位配额进度</h5></div>
+    <div class="card-body">
+        <table class="table">
+            <thead><tr><th>实习基地</th><th>配额</th><th>已选</th><th>剩余</th><th>进度</th></tr></thead>
             <tbody>
             {% for p in positions %}
             <tr>
-                <td><b>{{ p.base_name }}</b></td>
-                <td>{{ p.instructor or '-' }}</td>
+                <td>{{ p.base_name }}</td>
                 <td>{{ p.quota }}</td>
                 <td>{{ p.current_count }}</td>
-                <td><span class="badge bg-{% if p.quota - p.current_count > 0 %}success{% else %}danger{% endif %}">{{ p.quota - p.current_count }}</span></td>
-                <td>{{ p.class_names or '全部' }}</td>
+                <td>{{ p.quota - p.current_count }}</td>
+                <td><div class="progress"><div class="progress-bar" style="width:{{ (p.current_count/p.quota*100)|int if p.quota else 0 }}%">{{ (p.current_count/p.quota*100)|int if p.quota else 0 }}%</div></div></td>
             </tr>
             {% endfor %}
             </tbody>
@@ -84,48 +28,145 @@
     </div>
 </div>
 
+<div class="card">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-gear"></i> 系统控制</h5></div>
+    <div class="card-body">
+        <!-- 定时设置表单 -->
+        <form method="POST" action="/admin/system" id="systemForm">
+            <div class="mb-3">
+                <label>开放时间</label>
+                <input type="datetime-local" id="open_time" name="open_time" class="form-control" value="{{ open_time or '' }}">
+            </div>
+            <div class="mb-3">
+                <label>截止时间</label>
+                <input type="datetime-local" id="close_time" name="close_time" class="form-control" value="{{ close_time or '' }}">
+            </div>
+            <div class="mb-3">
+                <span class="badge bg-{{ 'success' if system_mode=='open' else 'info' if system_mode=='preview' else 'secondary' }} fs-6">
+                    当前状态：{{ '开放中' if system_mode=='open' else '预览模式' if system_mode=='preview' else '已关闭' }}
+                </span>
+            </div>
+            <div class="mb-3">
+                {% if system_mode != 'open' %}
+                <button name="action" value="open" class="btn btn-success btn-sm me-2"><i class="bi bi-play-circle"></i> 开放选择</button>
+                {% endif %}
+                {% if system_mode != 'preview' %}
+                <button name="action" value="preview" class="btn btn-info btn-sm me-2"><i class="bi bi-eye"></i> 开放预览</button>
+                {% endif %}
+                {% if system_mode != 'close' %}
+                <button name="action" value="close" class="btn btn-secondary btn-sm me-2"><i class="bi bi-stop-circle"></i> 关闭系统</button>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- 确认定时 + 倒计时 -->
+        <div class="mt-3 p-3 border rounded bg-light">
+            <h6><i class="bi bi-clock"></i> 定时开放设置</h6>
+            <p class="text-muted small mb-2">设置好时间后点击"确认设定"，系统将在指定时间自动开放/关闭</p>
+            <button type="button" class="btn btn-info btn-sm" onclick="confirmSchedule()">
+                <i class="bi bi-check-circle"></i> 确认设定时间
+            </button>
+            <span id="scheduleConfirmMsg" class="ms-2 text-success" style="display:none;">
+                <i class="bi bi-check-circle-fill"></i> 时间已确认！系统将按时自动开放
+            </span>
+            <div id="countdownArea" class="mt-2" style="display:none;">
+                <div class="alert alert-info py-2 mb-0">
+                    <i class="bi bi-clock"></i> <span id="countdownText"></span>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+        <form method="POST" action="/admin/system" id="randomForm">
+            <input type="hidden" name="action" value="set_random">
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="randomOrder" name="random_order" value="1" {{'checked' if random_order=='1' else ''}} onchange="document.getElementById('randomForm').submit()">
+                <label class="form-check-label" for="randomOrder">岗位随机排序（关闭则按添加顺序显示）</label>
+            </div>
+        </form>
+        
+        <form method="POST" action="/admin/system">
+            <input type="hidden" name="action" value="reset">
+            <button class="btn btn-danger btn-sm" onclick="return confirm('确定要重置所有选择数据吗？')"><i class="bi bi-arrow-counterclockwise"></i> 重置数据</button>
+        </form>
+    </div>
+</div>
+
 <script>
-function setSchedule() {
-    const openTime = document.getElementById('openTime').value;
-    const closeTime = document.getElementById('closeTime').value;
-    if (!openTime || !closeTime) { alert('请设置时间'); return; }
-    fetch('{{ url_for("admin_set_schedule", pid=pid) }}', {
+// 确认定时设定
+function confirmSchedule() {
+    var start = document.getElementById('open_time').value;
+    var end = document.getElementById('close_time').value;
+    if (!start || !end) {
+        alert('请先设置开始和结束时间');
+        return;
+    }
+    fetch('/admin/set_schedule', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({open_time: openTime, close_time: closeTime})
-    }).then(r => r.json()).then(data => {
+        body: JSON.stringify({open_time: start, close_time: end})
+    }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.success) {
-            document.getElementById('scheduleMsg').style.display = 'inline';
-            setTimeout(() => document.getElementById('scheduleMsg').style.display = 'none', 3000);
+            document.getElementById('scheduleConfirmMsg').style.display = 'inline';
+            startCountdown(parseLocalDateTime(start), parseLocalDateTime(end));
         } else {
-            alert(data.message || '设置失败');
+            alert(data.message || '设定失败');
         }
-    });
+    }).catch(function() { alert('请求失败'); });
+}
+
+// 解析 datetime-local 值为 Date 对象（北京时间）
+function parseLocalDateTime(str) {
+    var parts = str.split('T');
+    var dateParts = parts[0].split('-');
+    var timeParts = parts[1].split(':');
+    return new Date(
+        parseInt(dateParts[0]),
+        parseInt(dateParts[1]) - 1,
+        parseInt(dateParts[2]),
+        parseInt(timeParts[0]),
+        parseInt(timeParts[1]),
+        0
+    );
 }
 
 // 倒计时
-function updateCountdown() {
-    const openTime = document.getElementById('openTime').value;
-    const closeTime = document.getElementById('closeTime').value;
-    const cd = document.getElementById('countdown');
-    if (!openTime || !closeTime) { cd.style.display = 'none'; return; }
-    const now = new Date();
-    const openDt = new Date(openTime);
-    const closeDt = new Date(closeTime);
-    cd.style.display = 'block';
-    if (now < openDt) {
-        const diff = openDt - now;
-        const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
-        cd.innerHTML = '⏳ 距开放还有 <b>' + h + '时' + m + '分' + s + '秒</b>';
-    } else if (now < closeDt) {
-        const diff = closeDt - now;
-        const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
-        cd.innerHTML = '✅ 系统已开放，距截止还有 <b>' + h + '时' + m + '分' + s + '秒</b>';
-    } else {
-        cd.innerHTML = '⛔ 已截止';
+var countdownTimer = null;
+function startCountdown(openTime, closeTime) {
+    if (countdownTimer) clearInterval(countdownTimer);
+    document.getElementById('countdownArea').style.display = 'block';
+    function update() {
+        var now = new Date();
+        var text = '';
+        if (now < openTime) {
+            var diff = openTime - now;
+            var h = Math.floor(diff / 3600000);
+            var m = Math.floor((diff % 3600000) / 60000);
+            var s = Math.floor((diff % 60000) / 1000);
+            text = '距开放还有 ' + h + '时' + m + '分' + s + '秒';
+        } else if (now < closeTime) {
+            var diff = closeTime - now;
+            var h = Math.floor(diff / 3600000);
+            var m = Math.floor((diff % 3600000) / 60000);
+            var s = Math.floor((diff % 60000) / 1000);
+            text = '系统开放中，距关闭还有 ' + h + '时' + m + '分' + s + '秒';
+        } else {
+            text = '系统已关闭';
+            clearInterval(countdownTimer);
+        }
+        document.getElementById('countdownText').textContent = text;
     }
+    update();
+    countdownTimer = setInterval(update, 1000);
 }
-setInterval(updateCountdown, 1000);
-updateCountdown();
+
+// 页面加载时如果有已设定的时间，启动倒计时
+document.addEventListener('DOMContentLoaded', function() {
+    var startInput = document.getElementById('open_time');
+    var endInput = document.getElementById('close_time');
+    if (startInput && endInput && startInput.value && endInput.value) {
+        startCountdown(parseLocalDateTime(startInput.value), parseLocalDateTime(endInput.value));
+    }
+});
 </script>
 {% endblock %}
