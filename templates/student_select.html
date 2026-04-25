@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding-bottom: 80px; }
+.top-bar { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+.top-bar .info { font-size: 0.85em; opacity: 0.9; }
+.top-bar a { color: #fff; text-decoration: none; opacity: 0.8; }
+.main { max-width: 700px; margin: 16px auto; padding: 0 12px; }
+.position-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; gap: 12px; align-items: flex-start; cursor: pointer; transition: all 0.2s; position: relative; }
+.position-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.position-card.selected { border: 2px solid #667eea; }
+.position-card.assigned-tag::before { content: '指定'; position: absolute; top: -4px; right: 12px; background: linear-gradient(135deg, #f093fb, #f5576c); color: #fff; padding: 2px 10px; border-radius: 0 0 8px 8px; font-size: 0.75em; font-weight: 600; }
+.position-card.full { opacity: 0.5; pointer-events: none; }
+.radio-wrap { flex-shrink: 0; padding-top: 4px; }
+.radio-wrap input[type=radio] { width: 20px; height: 20px; accent-color: #667eea; }
+.pos-info { flex: 1; }
+.pos-name { font-weight: 700; font-size: 1.05em; color: #2c3e50; }
+.pos-meta { font-size: 0.82em; color: #95a5a6; margin-top: 4px; }
+.quota-bar { height: 6px; background: #e8e8e8; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.quota-bar .fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.quota-text { font-size: 0.78em; margin-top: 4px; font-weight: 600; }
+.submit-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 12px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+.submit-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; padding: 14px 40px; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.empty-state { text-align: center; padding: 60px; color: rgba(255,255,255,0.7); }
+</style>
+{% endblock %}
+{% block body %}
+<div class="top-bar">
+    <div>
+        <div style="font-weight:700;font-size:1.1em">{{ student_name }} · {{ class_name or '未分班' }}</div>
+        <div class="info">{{ project_name }}</div>
+    </div>
+    <a href="{{ url_for('student_logout') }}">退出登录</a>
+</div>
+
+<div class="main" id="positionsList">
+    <div class="empty-state" id="loadingState">加载中...</div>
+</div>
+
+<div class="submit-bar" id="submitBar" style="display:none">
+    <span id="selectedInfo" style="color:#666;font-size:0.9em">已选择：<b id="selectedName">-</b></span>
+    <button class="submit-btn" id="submitBtn" disabled onclick="submitChoice()">确认提交</button>
+</div>
+
+<form id="submitForm" method="POST" style="display:none">
+    <input type="hidden" name="position_id" id="formPositionId">
+</form>
+
+<script>
+const studentId = {{ student_id }};
+const projectId = {{ project_id }};
+const isOpen = '{{ system_mode }}' === 'open';
+let positions = [];
+let selectedId = null;
+
+function fetchPositions() {
+    fetch('/api/positions/' + projectId + '/' + studentId)
+        .then(r => r.json())
+        .then(data => {
+            positions = data;
+            renderPositions();
+        });
+}
+
+function renderPositions() {
+    const list = document.getElementById('positionsList');
+    if (!positions.length) {
+        list.innerHTML = '<div class="empty-state">暂无可选岗位</div>';
+        return;
+    }
+    let html = '';
+    positions.forEach(p => {
+        const isFull = p.remaining <= 0 && !p.assigned && !p.selected;
+        const isSelected = p.selected || selectedId === p.id;
+        const pct = p.quota > 0 ? ((p.quota - p.remaining) / p.quota * 100) : 0;
+        const fillColor = pct >= 100 ? '#e74c3c' : pct >= 70 ? '#f39c12' : '#00b894';
+        html += '<div class="position-card' + (isSelected ? ' selected' : '') + (p.assigned ? ' assigned-tag' : '') + (isFull ? ' full' : '') + '" onclick="selectPos(' + p.id + ', this)">';
+        html += '<div class="radio-wrap"><input type="radio" name="pos" ' + (isSelected ? 'checked' : '') + ' ' + (isFull || !isOpen ? 'disabled' : '') + '></div>';
+        html += '<div class="pos-info">';
+        html += '<div class="pos-name">' + p.base_name + '</div>';
+        if (p.instructor) html += '<div class="pos-meta">ð¨‍ð« ' + p.instructor + '</div>';
+        if (p.requirements) html += '<div class="pos-meta">ð ' + p.requirements + '</div>';
+        html += '<div class="quota-bar"><div class="fill" style="width:' + Math.min(pct, 100) + '%;background:' + fillColor + '"></div></div>';
+        html += '<div class="quota-text" style="color:' + (p.remaining > 0 ? '#00b894' : '#e74c3c') + '">剩余 ' + p.remaining + ' / ' + p.quota + ' 名</div>';
+        html += '</div></div>';
+    });
+    list.innerHTML = html;
+    updateSubmitBar();
+}
+
+function selectPos(id, el) {
+    if (!isOpen) return;
+    selectedId = id;
+    document.querySelectorAll('.position-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('input[type=radio]').checked = true;
+    updateSubmitBar();
+}
+
+function updateSubmitBar() {
+    const bar = document.getElementById('submitBar');
+    bar.style.display = 'flex';
+    const p = positions.find(x => x.id === selectedId);
+    document.getElementById('selectedName').textContent = p ? p.base_name : '未选择';
+    document.getElementById('submitBtn').disabled = !selectedId || !isOpen;
+}
+
+function submitChoice() {
+    if (!selectedId) return;
+    if (!confirm('确认选择该岗位？提交后不可修改。')) return;
+    document.getElementById('formPositionId').value = selectedId;
+    document.getElementById('submitForm').submit();
+}
+
+// 实时轮询
+fetchPositions();
+setInterval(fetchPositions, 5000);
+</script>
+{% endblock %}

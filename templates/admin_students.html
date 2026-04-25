@@ -1,0 +1,73 @@
+{% extends "admin_base.html" %}
+{% block admin_content %}
+<h4>ð¨‍ð 学生管理</h4>
+<div style="background:#fff;border-radius:10px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <!-- 筛选 -->
+    <form method="GET" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <select name="class_id" class="form-select" style="max-width:200px" onchange="this.form.submit()">
+            <option value="">全部班级</option>
+            {% for c in classes %}
+            <option value="{{ c.id }}" {% if selected_class == c.id|string %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    <!-- 导入 -->
+    <form method="POST" action="{{ url_for('admin_students_import', pid=pid) }}" enctype="multipart/form-data" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <select name="class_id" required class="form-select" style="max-width:200px">
+            <option value="">选择班级</option>
+            {% for c in classes %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="file" name="file" accept=".xlsx,.xls" required class="form-control" style="max-width:250px">
+        <button type="submit" class="btn btn-success">导入</button>
+        <a href="{{ url_for('student_template', pid=pid) }}" class="btn btn-outline-secondary">下载模板</a>
+    </form>
+    <!-- 批量操作 -->
+    <div style="margin-bottom:12px">
+        <button onclick="batchDelete()" class="btn btn-danger btn-sm">批量删除</button>
+        <button onclick="toggleSelectAll()" class="btn btn-outline-secondary btn-sm">全选/取消</button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead><tr><th><input type="checkbox" id="selectAll"></th><th>学号</th><th>姓名</th><th>班级</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+            {% for s in students %}
+            <tr>
+                <td><input type="checkbox" class="student-cb" value="{{ s.id }}"></td>
+                <td>{{ s.student_id }}</td>
+                <td>{{ s.name }}</td>
+                <td>{{ s.class_name or '-' }}</td>
+                <td>{% if s.has_submitted %}<span class="badge bg-success">已选</span>{% else %}<span class="badge bg-secondary">未选</span>{% endif %}</td>
+                <td><a href="{{ url_for('admin_students_delete', pid=pid, sid=s.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除？')">删除</a></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div style="color:#95a5a6;font-size:0.85em">共 {{ students|length }} 名学生</div>
+</div>
+<script>
+document.getElementById('selectAll').onchange = function() {
+    document.querySelectorAll('.student-cb').forEach(cb => cb.checked = this.checked);
+};
+function toggleSelectAll() {
+    const all = document.getElementById('selectAll');
+    all.checked = !all.checked;
+    all.onchange();
+}
+function batchDelete() {
+    const ids = [...document.querySelectorAll('.student-cb:checked')].map(cb => cb.value);
+    if (!ids.length) { alert('请选择学生'); return; }
+    if (!confirm('确定删除选中的 ' + ids.length + ' 名学生？')) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for("admin_students_batch_delete", pid=pid) }}';
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'ids'; input.value = ids.join(',');
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "admin_base.html" %}
+{% block admin_content %}
+<h4>ð« 班级管理</h4>
+<div style="background:#fff;border-radius:10px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <form method="POST" action="{{ url_for('admin_classes_add', pid=pid) }}" style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" name="name" required placeholder="班级名称" class="form-control" style="max-width:300px">
+        <button type="submit" class="btn btn-primary">添加</button>
+    </form>
+    <table class="table table-hover">
+        <thead><tr><th>班级名称</th><th>学生数</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for c in classes %}
+        <tr>
+            <td>{{ c.name }}</td>
+            <td>{{ c.student_count }}</td>
+            <td><a href="{{ url_for('admin_classes_delete', pid=pid, cid=c.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定删除？')">删除</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

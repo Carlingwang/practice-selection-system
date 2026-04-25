@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.login-card { background: #fff; border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+.login-title { text-align: center; font-size: 1.5em; font-weight: 700; color: #2c3e50; margin-bottom: 24px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { font-weight: 600; color: #555; display: block; margin-bottom: 6px; font-size: 0.9em; }
+.form-group select, .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1em; box-sizing: border-box; }
+.btn-submit { width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 10px; font-size: 1.05em; font-weight: 600; cursor: pointer; margin-top: 8px; }
+.btn-submit:hover { opacity: 0.9; }
+.alert { border-radius: 10px; margin-bottom: 16px; padding: 12px 16px; font-size: 0.9em; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="login-card">
+    <div class="login-title">ð 实习选岗系统</div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    <form method="POST">
+        <div class="form-group">
+            <label>选择项目</label>
+            <select name="project_id" required>
+                <option value="">请选择项目</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}">{{ p.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>姓名</label>
+            <input type="text" name="name" required placeholder="请输入姓名">
+        </div>
+        <div class="form-group">
+            <label>学号</label>
+            <input type="text" name="student_id" required placeholder="请输入学号">
+        </div>
+        <button type="submit" class="btn-submit">进入</button>
+    </form>
+</div>
+{% endblock %}

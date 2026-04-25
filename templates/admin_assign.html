@@ -1,0 +1,42 @@
+{% extends "admin_base.html" %}
+{% block admin_content %}
+<h4>ð¯ 指定关系管理</h4>
+<div style="background:#fff;border-radius:10px;padding:20px;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <!-- 导入 -->
+    <form method="POST" action="{{ url_for('admin_assign_import', pid=pid) }}" enctype="multipart/form-data" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+        <input type="file" name="file" accept=".xlsx,.xls" required class="form-control" style="max-width:250px">
+        <button type="submit" class="btn btn-success">导入</button>
+        <a href="{{ url_for('assign_template', pid=pid) }}" class="btn btn-outline-secondary">下载模板</a>
+    </form>
+    <!-- 手动添加 -->
+    <form method="POST" action="{{ url_for('admin_assign_add', pid=pid) }}" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <select name="student_id" required class="form-select" style="max-width:250px">
+            <option value="">选择学生</option>
+            {% for s in students %}
+            <option value="{{ s.id }}">{{ s.name }} ({{ s.student_id }}) - {{ s.class_name or '未分班' }}</option>
+            {% endfor %}
+        </select>
+        <select name="position_id" required class="form-select" style="max-width:250px">
+            <option value="">选择岗位</option>
+            {% for p in positions %}
+            <option value="{{ p.id }}">{{ p.base_name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">指定</button>
+    </form>
+    <!-- 现有指定 -->
+    <table class="table table-sm table-hover">
+        <thead><tr><th>学号</th><th>姓名</th><th>指定岗位</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for a in assigns %}
+        <tr>
+            <td>{{ a.sid }}</td>
+            <td>{{ a.sname }}</td>
+            <td><b>{{ a.base_name }}</b></td>
+            <td><a href="{{ url_for('admin_assign_delete', pid=pid, sid=a.student_id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定取消指定？')">取消</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

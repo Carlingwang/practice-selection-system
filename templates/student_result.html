@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block extra_head %}
+<style>
+body { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.result-card { background: #fff; border-radius: 16px; padding: 40px; max-width: 500px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.15); text-align: center; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="result-card">
+    <div style="font-size:3em;margin-bottom:12px">ð</div>
+    <h3 style="color:#2c3e50;margin-bottom:8px">选择成功！</h3>
+    <p style="color:#95a5a6;margin-bottom:24px">{{ project_name }} · {{ student_name }} · {{ class_name or '' }}</p>
+    <div style="background:#f8f9fa;border-radius:12px;padding:20px;text-align:left">
+        <p><b>实习基地：</b>{{ sub.base_name }}</p>
+        {% if sub.instructor %}<p><b>指导教师：</b>{{ sub.instructor }}</p>{% endif %}
+        {% if sub.requirements %}<p><b>备注要求：</b>{{ sub.requirements }}</p>{% endif %}
+        <p><b>提交时间：</b>{{ sub.created_at }}</p>
+    </div>
+    <a href="{{ url_for('student_logout') }}" style="display:inline-block;margin-top:24px;color:#667eea;text-decoration:none;font-weight:600">退出登录</a>
+</div>
+{% endblock %}
